@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from qam_lib import *
 
-# --- 1. Parâmetros do sistema ---
+# System parameters
 n_bits = 100
 sps = 4
 beta = 0.35
@@ -11,41 +11,40 @@ t = 1e-6
 f_c = 1.5e6
 sigma = 0.2
 
-# --- 2. Gerar dados binários ---
+# Generate binary data
 bits = generate_binary_data(n_bits)
 
-# --- 3. Mapear bits para símbolos 16QAM ---
+# Map bits to 16QAM symbols
 symbols = map_16qam(bits)  # shape: (n_bits/4, 2)
 symbols_I = symbols[:, 0]
 symbols_Q = symbols[:, 1]
 
-# --- 4. Sobreamostragem ---
+# Upsample I and Q symbols
 upsampled_I = upsampling(symbols_I, sps)
 upsampled_Q = upsampling(symbols_Q, sps)
 
-# --- 5. Filtro de cosseno levantado ---
+# Generate raised cosine filter
 h = raised_cosine_filter(beta, sps, num_taps)
 
-# --- 6. Formatação de pulso (Nyquist) ---
+# Apply Nyquist pulse shaping filter
 shaped_I = nyquist_filter(upsampled_I, h)
 shaped_Q = nyquist_filter(upsampled_Q, h)
 
-# --- 7. Conversão D/A ---
+# Digital-to-analog conversion
 analog_I, analog_Q = digital_to_analog_converter(shaped_I, shaped_Q)
 
-# --- 8. Modulação ---
+# Modulate I and Q signals onto carrier
 modulated_signal = modulation(analog_I, analog_Q, f_c, t)
 
-# --- 9. Canal com ruído AWGN ---
+# Transmit signal through AWGN channel
 received_signal = add_noise(modulated_signal, sigma)
 
-# --- 10. Demodulação ---
+# Demodulate received signal
 received_I, received_Q = demodulate_sinal(received_signal, f_c, t)
 
-# --- 11. Decisão (demapeamento 16QAM) ---
+# Make decisions based on minimum distance
 received_symbols = demap_16qam((received_I, received_Q))
 
-# --- 12. Cálculo do BER ---
+# Calculate bit error rate
 ber_val = ber(received_symbols, symbols, n_bits, sps)
-print(f"BER estimado: {ber_val:.4f}")
-
+print(f"Estimated BER: {ber_val:.4f}")
